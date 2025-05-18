@@ -702,7 +702,7 @@ void Puckering::calculate7m() {
     setBoxDerivativesNoPbc(vQ);
     
     
-    // ANGULAR ROTATION or BOATNESS MEASURE by Epsilon
+    // ANGULAR ROTATION or BOATNESS MEASURE Theta
     double theta_7m = std::atan2(q3, q2);
     
     // Epsilon DERIVATIVES
