@@ -108,7 +108,9 @@ void Puckering::registerKeywords(Keywords& keys) {
     keys.addOutputComponent("tau3","default","Transformed amplitude tau3 (nonlinear amplitude for mode 3)");
     keys.addOutputComponent("theta7m","default","Angular deviation angle for 7 membered rings");
     keys.addOutputComponent("rho","default","Total puckering amplitude for 7 membered rings");
-
+    keys.addDOI("10.1021/ct401013s");
+    keys.addDOI("10.1021/ja00839a011");
+    keys.addDOI("10.1021/ja068411o");
 }
 
 Puckering::Puckering(const ActionOptions&ao):
