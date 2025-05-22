@@ -96,21 +96,19 @@ void Puckering::registerKeywords(Keywords& keys) {
     keys.addOutputComponent("q3","default","Amplitude 3 (7 membered rings)");
     keys.addOutputComponent("phi2","default","Phase 2 (7 membered rings)");
     keys.addOutputComponent("phi3","default","Phase 3 (7 membered rings)");
-    keys.addOutputComponent("x_7m","default","Hyper-Cartesian component x (7 membered rings)");
-    keys.addOutputComponent("y_7m","default","Hyper-Cartesian component y (7 membered rings)");
-    keys.addOutputComponent("z_7m","default","Hyper-Cartesian component z (7 membered rings)");
-    keys.addOutputComponent("w_7m","default","Hyper-Cartesian component w (7 membered rings)");
+    keys.addOutputComponent("x7m","default","Hyper-Cartesian component x (7 membered rings)");
+    keys.addOutputComponent("y7m","default","Hyper-Cartesian component y (7 membered rings)");
+    keys.addOutputComponent("z7m","default","Hyper-Cartesian component z (7 membered rings)");
+    keys.addOutputComponent("w7m","default","Hyper-Cartesian component w (7 membered rings)");
     keys.addOutputComponent("A2","default","Cremer-Pople Summation A2 (7 membered rings)");
     keys.addOutputComponent("B2","default","Cremer-Pople Summation B2 (7 membered rings)");
     keys.addOutputComponent("A3","default","Cremer-Pople Summation A3 (7 membered rings)");
     keys.addOutputComponent("B3","default","Cremer-Pople Summation B3 (7 membered rings)");
     keys.addOutputComponent("tau2","default","Transformed amplitude tau2 (nonlinear amplitude for mode 2)");
     keys.addOutputComponent("tau3","default","Transformed amplitude tau3 (nonlinear amplitude for mode 3)");
-    keys.addOutputComponent("theta_7m","default","Angular deviation angle for 7 membered rings");
-    keys.addDOI("10.1021/ct401013s");
-    keys.addDOI("10.1021/ja00839a011");
-    keys.addDOI("10.1021/ja068411o");
-    
+    keys.addOutputComponent("theta7m","default","Angular deviation angle for 7 membered rings");
+    keys.addOutputComponent("rho","default","Total puckering amplitude for 7 membered rings");
+
 }
 
 Puckering::Puckering(const ActionOptions&ao):
@@ -160,14 +158,14 @@ PLUMED_COLVAR_INIT(ao)
       componentIsNotPeriodic("q2");
       addComponentWithDerivatives("q3");
       componentIsNotPeriodic("q3");
-      addComponentWithDerivatives("x_7m");
-      componentIsNotPeriodic("x_7m");
-      addComponentWithDerivatives("y_7m");
-      componentIsNotPeriodic("y_7m");
-      addComponentWithDerivatives("z_7m");
-      componentIsNotPeriodic("z_7m");
-      addComponentWithDerivatives("w_7m");
-      componentIsNotPeriodic("w_7m");
+      addComponentWithDerivatives("x7m");
+      componentIsNotPeriodic("x7m");
+      addComponentWithDerivatives("y7m");
+      componentIsNotPeriodic("y7m");
+      addComponentWithDerivatives("z7m");
+      componentIsNotPeriodic("z7m");
+      addComponentWithDerivatives("w7m");
+      componentIsNotPeriodic("w7m");
       addComponentWithDerivatives("A2");
       componentIsNotPeriodic("A2");
       addComponentWithDerivatives("B2");
@@ -180,8 +178,11 @@ PLUMED_COLVAR_INIT(ao)
       componentIsNotPeriodic("tau2");
       addComponentWithDerivatives("tau3");
       componentIsNotPeriodic("tau3");
-      addComponentWithDerivatives("theta_7m");
-      componentIsNotPeriodic("theta_7m");
+      addComponentWithDerivatives("theta7m");
+      componentIsNotPeriodic("theta7m");
+      addComponentWithDerivatives("rho");
+      componentIsNotPeriodic("rho");
+        
     }
     
     log<<"  Bibliography ";
@@ -686,34 +687,34 @@ void Puckering::calculate7m() {
     for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(vphi3, j, dphi3_dR[j]);
     setBoxDerivativesNoPbc(vphi3);
     
-    // GENERAL AMPLITUDE Q
-    double Q = std::sqrt((2.0/7.0) * (A2*A2 + B2*B2 + A3*A3 + B3*B3));
+    // GENERAL AMPLITUDE rho
+    double rho = std::sqrt((2.0/7.0) * (A2*A2 + B2*B2 + A3*A3 + B3*B3));
     
     
-    // Q DERIVATIVES
-    std::vector<Vector> dQ_dR(7);
+    // rho DERIVATIVES
+    std::vector<Vector> drho_dR(7);
     for (unsigned j = 0; j < 7; ++j) {
-        dQ_dR[j] = (2.0/7.0)/Q * ( A2 * dA2_dR[j] + B2 * dB2_dR[j] + A3 * dA3_dR[j] + B3 * dB3_dR[j] );
+        drho_dR[j] = (2.0/7.0)/rho * ( A2 * dA2_dR[j] + B2 * dB2_dR[j] + A3 * dA3_dR[j] + B3 * dB3_dR[j] );
     }
     
-    Value* vQ = getPntrToComponent("Q");
-    vQ->set(Q);
-    for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(vQ, j, dQ_dR[j]);
-    setBoxDerivativesNoPbc(vQ);
+    Value* vrho = getPntrToComponent("rho");
+    vrho->set(rho);
+    for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(vrho, j, drho_dR[j]);
+    setBoxDerivativesNoPbc(vrho);
     
     
-    // ANGULAR ROTATION or BOATNESS MEASURE THETA
-    double theta_7m = std::atan2(q3, q2);
+    // ANGULAR ROTATION or BOATNESS MEASURE by Epsilon
+    double theta7m = std::atan2(q3, q2);
     
-    // THETA DERIVATIVES
-    std::vector<Vector> dtheta_7m_dR(7);
+    // Epsilon DERIVATIVES
+    std::vector<Vector> dtheta7m_dR(7);
     for (unsigned j = 0; j < 7; ++j) {
-        dtheta_7m_dR[j] = (1.0/(std::sqrt(A2*A2 + B2*B2) * std::sqrt(A3*A3 + B3*B3) * (A2*A2 + B2*B2 + A3*A3 + B3*B3))) *
+        dtheta7m_dR[j] = (1.0/(std::sqrt(A2*A2 + B2*B2) * std::sqrt(A3*A3 + B3*B3) * (A2*A2 + B2*B2 + A3*A3 + B3*B3))) *
         (A3 * dA3_dR[j] * (A2*A2 + B2*B2) - A2 * dA2_dR[j] * (A3*A3 + B3*B3) + B3 * dB3_dR[j] * (A2*A2 + B2*B2) - B2 * dB2_dR[j] * (A3*A3 + B3*B3));
     }
-    Value* vtheta_7m = getPntrToComponent("theta_7m"); vtheta_7m->set(theta_7m);
-    for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(vtheta_7m, j, dtheta_7m_dR[j]);
-    setBoxDerivativesNoPbc(vtheta_7m);
+    Value* vtheta7m = getPntrToComponent("theta7m"); vtheta7m->set(theta7m);
+    for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(vtheta7m, j, dtheta7m_dR[j]);
+    setBoxDerivativesNoPbc(vtheta7m);
     
     // Nonlinear Amplitude tau2
     double tau2_squared_base = (2.0/7.0) * (A2*A2 + B2*B2);
@@ -746,26 +747,26 @@ void Puckering::calculate7m() {
     setBoxDerivativesNoPbc(vtau3);
     
     // qx, qy, qz, qw
-    double x_7m = A2 * std::sqrt(2.0/7.0);
-    double y_7m = -B2 * std::sqrt(2.0/7.0);
-    double z_7m = -B3 * std::sqrt(2.0/7.0);
-    double w_7m = A3 * std::sqrt(2.0/7.0);
+    double x7m = A2 * std::sqrt(2.0/7.0);
+    double y7m = -B2 * std::sqrt(2.0/7.0);
+    double z7m = -B3 * std::sqrt(2.0/7.0);
+    double w7m = A3 * std::sqrt(2.0/7.0);
     
-    std::vector<std::string> labels_7m = {"x_7m", "y_7m", "z_7m", "w_7m"};
-    std::vector<double> qvals_7m = {x_7m, y_7m, z_7m, w_7m};
-    std::vector<std::vector<Vector>> dqvals_dR_7m(4, std::vector<Vector>(7));
+    std::vector<std::string> labels7m = {"x7m", "y7m", "z7m", "w7m"};
+    std::vector<double> qvals7m = {x7m, y7m, z7m, w7m};
+    std::vector<std::vector<Vector>> dqvals_dR7m(4, std::vector<Vector>(7));
     
     for (unsigned j = 0; j < 7; ++j) {
-        dqvals_dR_7m[0][j] = dA2_dR[j] * std::sqrt(2.0/7.0);
-        dqvals_dR_7m[1][j] = -dB2_dR[j] * std::sqrt(2.0/7.0);
-        dqvals_dR_7m[2][j] = -dB3_dR[j] * std::sqrt(2.0/7.0);
-        dqvals_dR_7m[3][j] = dA3_dR[j] * std::sqrt(2.0/7.0);
+        dqvals_dR7m[0][j] = dA2_dR[j] * std::sqrt(2.0/7.0);
+        dqvals_dR7m[1][j] = -dB2_dR[j] * std::sqrt(2.0/7.0);
+        dqvals_dR7m[2][j] = -dB3_dR[j] * std::sqrt(2.0/7.0);
+        dqvals_dR7m[3][j] = dA3_dR[j] * std::sqrt(2.0/7.0);
     }
     
     for (int idx = 0; idx < 4; ++idx) {
-        Value* v = getPntrToComponent(labels_7m[idx]);
-        v->set(qvals_7m[idx]);
-        for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(v, j, dqvals_dR_7m[idx][j]);
+        Value* v = getPntrToComponent(labels7m[idx]);
+        v->set(qvals7m[idx]);
+        for (unsigned j = 0; j < 7; ++j) setAtomsDerivatives(v, j, dqvals_dR7m[idx][j]);
         setBoxDerivativesNoPbc(v);
     }
 }
